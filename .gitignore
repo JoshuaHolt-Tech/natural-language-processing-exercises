@@ -6,3 +6,4 @@ env.py
 .ipynb_checkpoints/
 __pycache__
 *.xlsx
+*.json
