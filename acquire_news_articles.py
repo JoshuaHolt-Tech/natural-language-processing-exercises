@@ -4,6 +4,7 @@ import pandas as pd
 import json
 from requests import get
 from bs4 import BeautifulSoup
+from env import *
 
 
 def get_blog_articles(article_list):
@@ -20,14 +21,14 @@ def get_blog_articles(article_list):
     
     article_info = []
     
-    for article in article_list:
+    for link in article_list:
         
-        response = get(article, headers=headers)
+        response = get(link, headers=headers)
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
         info_dict = {'title': soup.find('h1').text,
-                     'link': article,
+                     'link': link,
                      'date_published': soup.find('span', class_='published').text,
                      'content': soup.find('div', class_='entry-content').text}
     
@@ -65,7 +66,9 @@ def scrape_one_page(topic):
     return summary_list
 
 def get_news_articles(topic_list):
-    
+    """
+    Doesn't use topic_list if news_articles.json is in the same folder.
+    """
     file = 'news_articles.json'
     
     if os.path.exists(file):
@@ -104,3 +107,36 @@ def get_article_text():
         f.write(article.text)
 
     return article.text
+
+def get_spam_df():
+    """
+    This function gets all data from the connection_logs database.
+    """
+    filename = "spam_db.csv"
+    
+    #Checks if file is catched
+    if os.path.isfile(filename):
+        
+        df = pd.read_csv(filename)
+        
+        df = df.set_index('id')
+
+        return df
+    else:
+        
+        # read the SQL query into a dataframe
+        query = """
+        SELECT * FROM spam; 
+        """
+        
+        #Gets connection to Codeup database
+        df = pd.read_sql(query, get_connection('spam_db'))
+        
+        #Caching
+        df.to_csv(filename, index=False)
+        
+        #Setting index
+        df = df.set_index('id')
+
+        #Return the dataframe
+        return df
